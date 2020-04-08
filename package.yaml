@@ -1,0 +1,50 @@
+name: haskell-exchange-rates-cli
+version: 0.1.0.0
+github: "Cedomic/haskell-exchange-rates-cli"
+license: MIT
+author: "Cedomic"
+maintainer: "example@example.com"
+copyright: "2020 Cedomic"
+
+extra-source-files:
+  - README.md
+  - ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description: Please see the README on GitHub at <https://github.com/Cedomic/haskell-exchange-rates-cli#readme>
+
+dependencies:
+  - base >= 4.7 && < 5
+  - aeson >= 1.4.7.1
+  - req >= 3.1.0
+
+library:
+  source-dirs: src
+
+executables:
+  haskell-exchange-rates-cli-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - haskell-exchange-rates-cli
+
+tests:
+  haskell-exchange-rates-cli-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - haskell-exchange-rates-cli
