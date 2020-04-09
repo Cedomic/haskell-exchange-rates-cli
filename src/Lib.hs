@@ -9,15 +9,22 @@ import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Network.HTTP.Req
 import           Models
-
+import           Data.Text
+import qualified Data.HashMap.Strict
+import qualified Data.List
+import qualified Data.Char                      ( toUpper )
 
 
 execReq :: IO ()
 execReq = do
-    putStrLn "Enter a base currency pair (e.g. EUR or USD)"
+    putStrLn "\nEnter a base currency pair (e.g. EUR or USD)"
     baseCurrency          <- getLine
-    responseExchangeRates <- exchangeRates baseCurrency
-    liftIO $ print (responseBody responseExchangeRates :: Value)
+    responseExchangeRates <- exchangeRates $ uppercase baseCurrency
+    liftIO $ putStrLn
+        (getExchangeRatesString
+            (responseBody responseExchangeRates :: ExchangeRatesResponse)
+        )
+    execReq
 
 exchangeRates :: (MonadIO m, FromJSON a) => String -> m (JsonResponse a)
 exchangeRates baseCurrency = runReq defaultHttpConfig $ req
@@ -28,6 +35,28 @@ exchangeRates baseCurrency = runReq defaultHttpConfig $ req
     ("base" =: (baseCurrency :: String))
 
 
+getExchangeRatesString :: ExchangeRatesResponse -> String
+getExchangeRatesString r =
+    "The exchange rate for the currency "
+        ++ show (base r)
+        ++ " on the "
+        ++ show (date r)
+        ++ " is:"
+        ++ show
+               (Data.List.intercalate
+                   "\n - "
+                   (Prelude.map
+                       (\(currency, exchangeRate) ->
+                           removeSlash (show currency) ++ " = " ++ removeSlash
+                               (show exchangeRate)
+                       )
+                       (Data.HashMap.Strict.toList $ rates r)
+                   )
+               )
 
 
+uppercase = Prelude.map Data.Char.toUpper
 
+removeSlash ('\"' : c : rest) = c : removeSlash rest
+removeSlash (c        : rest) = c : removeSlash rest
+removeSlash []                = []
