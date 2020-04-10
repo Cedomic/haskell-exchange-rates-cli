@@ -7,21 +7,23 @@ where
 
 import           Control.Monad.IO.Class
 import           Data.Aeson
+import           Utils                          ( uppercase
+                                                , removeSlash
+                                                , removeNumber
+                                                , objectToTupleList
+                                                )
 import           Network.HTTP.Req
 import           Models
-import           Data.Text
-import qualified Data.HashMap.Strict
-import qualified Data.List
-import qualified Data.Char                      ( toUpper )
+
 
 
 execReq :: IO ()
 execReq = do
-    putStrLn "\nEnter a base currency pair (e.g. EUR or USD)"
+    putStrLn "\nEnter a base currency pair (e.g. EUR or USD):"
     baseCurrency          <- getLine
     responseExchangeRates <- exchangeRates $ uppercase baseCurrency
-    liftIO $ putStrLn
-        (getExchangeRatesString
+    liftIO $ putStr
+        (getResponseString
             (responseBody responseExchangeRates :: ExchangeRatesResponse)
         )
     execReq
@@ -35,28 +37,33 @@ exchangeRates baseCurrency = runReq defaultHttpConfig $ req
     ("base" =: (baseCurrency :: String))
 
 
-getExchangeRatesString :: ExchangeRatesResponse -> String
-getExchangeRatesString r =
-    "The exchange rate for the currency "
+getResponseString :: ExchangeRatesResponse -> String
+getResponseString r =
+    "The exchange rates for the currency "
         ++ show (base r)
         ++ " on the "
         ++ show (date r)
         ++ " is:"
-        ++ show
-               (Data.List.intercalate
-                   "\n - "
-                   (Prelude.map
-                       (\(currency, exchangeRate) ->
-                           removeSlash (show currency) ++ " = " ++ removeSlash
-                               (show exchangeRate)
-                       )
-                       (Data.HashMap.Strict.toList $ rates r)
-                   )
-               )
+        ++ "\n\n"
+        ++ getExchangeRatesString (rates r)
+
+getExchangeRatesString :: Object -> String
+getExchangeRatesString r = unlines
+    ( map
+            (\(currency, exchangeRate) ->
+                "  - "
+                    ++ removeSlash currency
+                    ++ " = "
+                    ++ removeNumber exchangeRate
+            )
+    $ objectToTupleList r
+    )
 
 
-uppercase = Prelude.map Data.Char.toUpper
 
-removeSlash ('\"' : c : rest) = c : removeSlash rest
-removeSlash (c        : rest) = c : removeSlash rest
-removeSlash []                = []
+
+
+
+
+
+
